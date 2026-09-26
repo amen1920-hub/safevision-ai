@@ -1,0 +1,39 @@
+# Data (versionné par DVC, jamais par Git)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Modèles / poids
+*.pt
+*.onnx
+*.pth
+models/*.dvc
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+*.egg-info/
+
+# MLflow
+mlruns/
+mlflow.db
+
+# Node / Frontend
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
