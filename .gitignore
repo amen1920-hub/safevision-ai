@@ -4,11 +4,11 @@ data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 
-# Modèles / poids
-*.pt
-*.onnx
-*.pth
-models/*.dvc
+# Modeles / poids (le fichier reel est exclu, mais son pointeur .dvc est garde)
+models/*.pt
+models/*.onnx
+models/*.pth
+!models/*.dvc
 
 # Python
 __pycache__/
@@ -37,3 +37,13 @@ frontend/dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# MLflow (local)
+mlartifacts/
+
+# Resultats d'entrainement YOLO
+runs/
+
+# Poids pre-entraines telecharges automatiquement par Ultralytics
+yolov8n.pt
+yolov8s.pt

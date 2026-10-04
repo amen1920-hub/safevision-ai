@@ -1,0 +1,5 @@
+outs:
+- md5: 2720270929bc01fbb7584128bf96ae49
+  size: 22528419
+  hash: md5
+  path: safevision_yolov8s_v1.pt
