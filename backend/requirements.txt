@@ -1,0 +1,16 @@
+# --- API ---
+fastapi==0.142.2
+uvicorn==0.54.0
+python-multipart==0.0.32
+pydantic==2.13.5
+
+# --- Images et calcul ---
+pillow==12.3.0
+numpy==2.4.6
+opencv-python==5.0.0.93
+
+# --- Inference (le modele ONNX est charge via Ultralytics + ONNX Runtime) ---
+# PyTorch (version CPU) est installe a part dans le Dockerfile.
+ultralytics==8.4.170
+onnx==1.23.1
+onnxruntime==1.30.0
