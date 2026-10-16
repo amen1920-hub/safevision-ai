@@ -6,6 +6,7 @@ sait aussi bien charger un .pt qu'un .onnx) et expose une methode simple
 pour detecter les objets sur une image, prete a etre utilisee par l'API.
 """
 
+import os
 import time
 from pathlib import Path
 from typing import List, Dict, Any
@@ -15,7 +16,12 @@ import numpy as np
 from ultralytics import YOLO
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-MODEL_PATH = PROJECT_ROOT / "models" / "safevision_yolov8s_v1.onnx"
+# Le chemin du modele peut etre surcharge par la variable d'environnement
+# MODEL_PATH (utilise dans Docker, ou le modele est monte dans /models).
+MODEL_PATH = Path(os.getenv(
+    "MODEL_PATH",
+    str(PROJECT_ROOT / "models" / "safevision_yolov8s_v1.onnx"),
+))
 
 CLASS_NAMES = [
     "Person", "Hardhat", "NO-Hardhat", "Safety Vest",
