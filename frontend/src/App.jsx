@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Dropzone from './components/Dropzone'
 import BoundingBoxCanvas from './components/BoundingBoxCanvas'
 import ScoreBars from './components/ScoreBars'
+import Gallery from './components/Gallery'
 import { getHealth, predict } from './services/api'
 
 export default function App() {
@@ -62,6 +63,7 @@ export default function App() {
       <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-3">
         <section className="space-y-4 lg:col-span-2">
           <Dropzone onFile={handleFile} disabled={loading} />
+          <Gallery onFile={handleFile} disabled={loading} />
 
           {error && (
             <div className="rounded-xl bg-red-500/20 p-4 text-red-200">
