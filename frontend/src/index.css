@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Animation d'apparition des barres de score */
+@keyframes grow {
+  from {
+    width: 0;
+  }
+}
