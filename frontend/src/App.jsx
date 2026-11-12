@@ -3,6 +3,7 @@ import Dropzone from './components/Dropzone'
 import BoundingBoxCanvas from './components/BoundingBoxCanvas'
 import ScoreBars from './components/ScoreBars'
 import Gallery from './components/Gallery'
+import Webcam from './components/Webcam'
 import { getHealth, predict } from './services/api'
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
   const [runId, setRunId] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [mode, setMode] = useState('image')
 
   useEffect(() => {
     getHealth()
@@ -45,6 +47,24 @@ export default function App() {
     <div className="min-h-screen bg-slate-900 text-slate-100">
       <header className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
         <h1 className="text-2xl font-bold">SafeVision AI</h1>
+        <nav className="flex gap-2">
+          {[
+            ['image', 'Image'],
+            ['webcam', 'Webcam'],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setMode(id)}
+              className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
+                mode === id
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
         <span
           className={`rounded-full px-3 py-1 text-sm ${
             apiOk
@@ -60,6 +80,9 @@ export default function App() {
         </span>
       </header>
 
+      {mode === 'webcam' ? (
+        <Webcam />
+      ) : (
       <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-3">
         <section className="space-y-4 lg:col-span-2">
           <Dropzone onFile={handleFile} disabled={loading} />
@@ -127,6 +150,7 @@ export default function App() {
           )}
         </aside>
       </main>
+      )}
     </div>
   )
 }
