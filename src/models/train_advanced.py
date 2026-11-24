@@ -36,31 +36,32 @@ os.environ["MLFLOW_EXPERIMENT_NAME"] = "safevision-ai"
 #    (protege par if __name__ == "__main__" -> obligatoire sous Windows)
 # ------------------------------------------------------------------
 
+
 def main():
     DATA_YAML = PROJECT_ROOT / "data" / "processed" / "data.yaml"
 
     # Modele de depart : YOLOv8s pre-entraine sur COCO (plus grand que le nano)
     model = YOLO("yolov8s.pt")
 
-    results = model.train(
+    model.train(
         data=str(DATA_YAML),
         epochs=80,
         imgsz=640,
-        batch=4,                 # YOLOv8s est plus lourd -> batch reduit pour tenir dans 4 Go VRAM
-        patience=20,              # un peu plus de patience vu le plus grand nombre d'epochs
+        batch=4,  # YOLOv8s est plus lourd -> batch reduit pour tenir dans 4 Go VRAM
+        patience=20,  # un peu plus de patience vu le plus grand nombre d'epochs
         project="runs_safevision",
         name="advanced_yolov8s",
         exist_ok=True,
         seed=42,
-        workers=4,                # OK maintenant que le script est protege par if __name__
+        workers=4,  # OK maintenant que le script est protege par if __name__
         # --- Augmentation renforcee (aide les classes rares) ---
-        mosaic=1.0,                # deja actif par defaut, on le rend explicite
-        mixup=0.15,                # melange deux images -> plus de diversite
-        copy_paste=0.15,           # colle des objets d'une image sur une autre -> plus d'exemples
+        mosaic=1.0,  # deja actif par defaut, on le rend explicite
+        mixup=0.15,  # melange deux images -> plus de diversite
+        copy_paste=0.15,  # colle des objets d'une image sur une autre -> plus d'exemples
         hsv_h=0.015,
         hsv_s=0.7,
         hsv_v=0.4,
-        degrees=5.0,               # legere rotation aleatoire
+        degrees=5.0,  # legere rotation aleatoire
         translate=0.1,
         scale=0.5,
         fliplr=0.5,
@@ -70,8 +71,8 @@ def main():
     print("=" * 60)
     print("ENTRAINEMENT AVANCE TERMINE")
     print("=" * 60)
-    print(f"Resultats sauvegardes dans : runs_safevision/advanced_yolov8s/")
-    print(f"Consultez MLflow sur http://127.0.0.1:5000 pour comparer avec le baseline")
+    print("Resultats sauvegardes dans : runs_safevision/advanced_yolov8s/")
+    print("Consultez MLflow sur http://127.0.0.1:5000 pour comparer avec le baseline")
 
 
 if __name__ == "__main__":

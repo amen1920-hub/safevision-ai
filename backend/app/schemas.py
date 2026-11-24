@@ -8,16 +8,20 @@ sortants de l'API FastAPI, conformement au cahier des charges.
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
-
 # ------------------------------------------------------------------
 # /health
 # ------------------------------------------------------------------
 
+
 class HealthResponse(BaseModel):
     status: str = Field(..., description="Etat global du serveur : 'ok' ou 'degraded'")
     model_loaded: bool = Field(..., description="Le modele est-il charge en memoire ?")
-    gpu_available: bool = Field(..., description="Un GPU est-il disponible sur la machine ?")
-    model_version: Optional[str] = Field(None, description="Version du modele actuellement charge")
+    gpu_available: bool = Field(
+        ..., description="Un GPU est-il disponible sur la machine ?"
+    )
+    model_version: Optional[str] = Field(
+        None, description="Version du modele actuellement charge"
+    )
 
     class Config:
         json_schema_extra = {
@@ -33,6 +37,7 @@ class HealthResponse(BaseModel):
 # ------------------------------------------------------------------
 # /model/metadata
 # ------------------------------------------------------------------
+
 
 class ModelMetadataResponse(BaseModel):
     name: str = Field(..., description="Nom du modele")
@@ -50,10 +55,24 @@ class ModelMetadataResponse(BaseModel):
                 "name": "safevision-yolo",
                 "architecture": "YOLOv8s",
                 "version": "1",
-                "classes": ["Person", "Hardhat", "NO-Hardhat", "Safety Vest",
-                             "NO-Safety Vest", "Mask", "NO-Mask", "Gloves", "Safety Cone"],
+                "classes": [
+                    "Person",
+                    "Hardhat",
+                    "NO-Hardhat",
+                    "Safety Vest",
+                    "NO-Safety Vest",
+                    "Mask",
+                    "NO-Mask",
+                    "Gloves",
+                    "Safety Cone",
+                ],
                 "num_classes": 9,
-                "metrics": {"mAP50": 0.626, "mAP50_95": 0.360, "precision": 0.866, "recall": 0.572},
+                "metrics": {
+                    "mAP50": 0.626,
+                    "mAP50_95": 0.360,
+                    "precision": 0.866,
+                    "recall": 0.572,
+                },
                 "input_size": 640,
                 "format": "onnx",
             }
@@ -63,6 +82,7 @@ class ModelMetadataResponse(BaseModel):
 # ------------------------------------------------------------------
 # /predict
 # ------------------------------------------------------------------
+
 
 class BoundingBox(BaseModel):
     x1: float = Field(..., description="Coordonnee X du coin superieur gauche (pixels)")
@@ -74,7 +94,9 @@ class BoundingBox(BaseModel):
 class Detection(BaseModel):
     class_id: int = Field(..., description="Identifiant numerique de la classe")
     class_name: str = Field(..., description="Nom de la classe detectee")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Score de confiance (0 a 1)")
+    confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="Score de confiance (0 a 1)"
+    )
     bbox: BoundingBox = Field(..., description="Boite englobante de l'objet detecte")
 
 
@@ -83,7 +105,9 @@ class PredictResponse(BaseModel):
     num_detections: int = Field(..., description="Nombre total d'objets detectes")
     image_width: int = Field(..., description="Largeur de l'image traitee (pixels)")
     image_height: int = Field(..., description="Hauteur de l'image traitee (pixels)")
-    inference_time_ms: float = Field(..., description="Temps d'inference cote serveur (ms)")
+    inference_time_ms: float = Field(
+        ..., description="Temps d'inference cote serveur (ms)"
+    )
 
     class Config:
         json_schema_extra = {
@@ -107,6 +131,7 @@ class PredictResponse(BaseModel):
 # ------------------------------------------------------------------
 # Erreurs
 # ------------------------------------------------------------------
+
 
 class ErrorResponse(BaseModel):
     detail: str = Field(..., description="Description de l'erreur")

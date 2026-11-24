@@ -1,202 +1,115 @@
 """
-test_api.py
-============
-Tests unitaires Pytest pour l'API SafeVision AI.
-
-Usage :
-    cd backend
-    pytest tests/test_api.py -v
+Tests de l'API SafeVision AI avec un modele simule (voir conftest.py).
+Ils verifient les endpoints, les formats de reponse et les codes d'erreur,
+sans dependre du modele ni des donnees : ils tournent en integration continue.
 """
 
 import io
-from pathlib import Path
 
-import pytest
-from fastapi.testclient import TestClient
 from PIL import Image
 
-from app.main import app
+
+def post_image(client, path, content, name="test.jpg", mime="image/jpeg"):
+    return client.post(path, files={"file": (name, io.BytesIO(content), mime)})
 
 
-
-@pytest.fixture(scope="module")
-def client():
-    """
-    Demarre l'application AVEC ses evenements de demarrage (lifespan), ce qui
-    charge le modele une seule fois pour tous les tests du module.
-    Sans le bloc 'with', FastAPI ne lance pas le lifespan et le modele reste
-    non charge (d'ou les erreurs 503).
-    """
-    with TestClient(app) as c:
-        yield c
+# ------------------------------ GET / ------------------------------
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-TEST_IMAGES_DIR = PROJECT_ROOT / "data" / "processed" / "test" / "images"
+def test_root_returns_200(client):
+    assert client.get("/").status_code == 200
 
 
-def _get_sample_image_path() -> Path:
-    """Retourne le chemin de la premiere image de test disponible."""
-    images = sorted(TEST_IMAGES_DIR.glob("*.jpg"))
-    assert images, f"Aucune image de test trouvee dans {TEST_IMAGES_DIR}"
-    return images[0]
+# ---------------------------- GET /health ----------------------------
 
-
-# ------------------------------------------------------------------
-# GET /health
-# ------------------------------------------------------------------
 
 def test_health_returns_200(client):
-    response = client.get("/health")
-    assert response.status_code == 200
+    assert client.get("/health").status_code == 200
 
 
 def test_health_response_structure(client):
-    response = client.get("/health")
-    data = response.json()
-    assert "status" in data
-    assert "model_loaded" in data
-    assert "gpu_available" in data
-    assert isinstance(data["model_loaded"], bool)
+    data = client.get("/health").json()
+    assert data["status"] == "ok"
+    assert data["model_loaded"] is True
     assert isinstance(data["gpu_available"], bool)
+    assert data["model_version"] == "1"
 
 
-def test_health_model_is_loaded(client):
-    """Verifie que le modele est bien charge (precondition pour les autres tests)."""
-    response = client.get("/health")
-    data = response.json()
-    assert data["model_loaded"] is True, "Le modele doit etre charge pour que les tests suivants aient un sens."
-
-
-# ------------------------------------------------------------------
-# GET /model/metadata
-# ------------------------------------------------------------------
-
-def test_model_metadata_returns_200(client):
-    response = client.get("/model/metadata")
-    assert response.status_code == 200
+# ------------------------- GET /model/metadata -------------------------
 
 
 def test_model_metadata_structure(client):
     response = client.get("/model/metadata")
+    assert response.status_code == 200
     data = response.json()
     assert data["name"] == "safevision-yolo"
     assert data["num_classes"] == 9
     assert len(data["classes"]) == 9
-    assert "Person" in data["classes"]
     assert "Hardhat" in data["classes"]
     assert "mAP50" in data["metrics"]
 
 
-# ------------------------------------------------------------------
-# POST /predict
-# ------------------------------------------------------------------
+# ---------------------------- POST /predict ----------------------------
 
-def test_predict_with_valid_image_returns_200(client):
-    image_path = _get_sample_image_path()
-    with open(image_path, "rb") as f:
-        response = client.post(
-            "/predict",
-            files={"file": (image_path.name, f, "image/jpeg")},
-        )
+
+def test_predict_returns_valid_structure(client, jpeg_bytes):
+    response = post_image(client, "/predict", jpeg_bytes)
     assert response.status_code == 200
-
-
-def test_predict_response_structure(client):
-    image_path = _get_sample_image_path()
-    with open(image_path, "rb") as f:
-        response = client.post(
-            "/predict",
-            files={"file": (image_path.name, f, "image/jpeg")},
-        )
     data = response.json()
-    assert "detections" in data
-    assert "num_detections" in data
-    assert "image_width" in data
-    assert "image_height" in data
-    assert "inference_time_ms" in data
-    assert isinstance(data["detections"], list)
     assert data["num_detections"] == len(data["detections"])
+    assert data["image_width"] == 64
+    assert data["image_height"] == 48
+    assert data["inference_time_ms"] >= 0
 
 
-def test_predict_detection_fields(client):
-    """Si au moins une detection est trouvee, verifie la structure de chaque champ."""
-    image_path = _get_sample_image_path()
-    with open(image_path, "rb") as f:
-        response = client.post(
-            "/predict",
-            files={"file": (image_path.name, f, "image/jpeg")},
-        )
-    data = response.json()
-    if data["num_detections"] > 0:
-        detection = data["detections"][0]
-        assert "class_id" in detection
-        assert "class_name" in detection
-        assert "confidence" in detection
-        assert 0.0 <= detection["confidence"] <= 1.0
-        assert "bbox" in detection
-        assert set(detection["bbox"].keys()) == {"x1", "y1", "x2", "y2"}
+def test_predict_detection_fields(client, jpeg_bytes):
+    detection = post_image(client, "/predict", jpeg_bytes).json()["detections"][0]
+    assert detection["class_name"] == "Hardhat"
+    assert 0.0 <= detection["confidence"] <= 1.0
+    assert set(detection["bbox"]) == {"x1", "y1", "x2", "y2"}
 
 
-def test_predict_with_invalid_file_returns_400(client):
-    """Un fichier texte (pas une image) doit etre rejete avec un code 400."""
-    fake_file = io.BytesIO(b"ceci n'est pas une image")
-    response = client.post(
-        "/predict",
-        files={"file": ("not_an_image.txt", fake_file, "text/plain")},
-    )
+def test_predict_rejects_non_image_with_400(client):
+    response = post_image(client, "/predict", b"ceci n'est pas une image", "x.txt")
     assert response.status_code == 400
 
 
-def test_predict_with_empty_file_returns_400(client):
-    empty_file = io.BytesIO(b"")
-    response = client.post(
-        "/predict",
-        files={"file": ("empty.jpg", empty_file, "image/jpeg")},
-    )
-    assert response.status_code == 400
+def test_predict_rejects_empty_file_with_400(client):
+    assert post_image(client, "/predict", b"").status_code == 400
 
 
-# ------------------------------------------------------------------
-# POST /predict/visualize
-# ------------------------------------------------------------------
+# ------------------------ POST /predict/visualize ------------------------
 
-def test_predict_visualize_returns_200(client):
-    image_path = _get_sample_image_path()
-    with open(image_path, "rb") as f:
-        response = client.post(
-            "/predict/visualize",
-            files={"file": (image_path.name, f, "image/jpeg")},
-        )
+
+def test_visualize_returns_valid_jpeg(client, jpeg_bytes):
+    response = post_image(client, "/predict/visualize", jpeg_bytes)
     assert response.status_code == 200
-
-
-def test_predict_visualize_returns_valid_jpeg(client):
-    image_path = _get_sample_image_path()
-    with open(image_path, "rb") as f:
-        response = client.post(
-            "/predict/visualize",
-            files={"file": (image_path.name, f, "image/jpeg")},
-        )
     assert response.headers["content-type"] == "image/jpeg"
-    # Verifie que les octets retournes forment bien une image JPEG valide
-    image = Image.open(io.BytesIO(response.content))
-    assert image.format == "JPEG"
+    assert Image.open(io.BytesIO(response.content)).format == "JPEG"
 
 
-def test_predict_visualize_with_invalid_file_returns_400(client):
-    fake_file = io.BytesIO(b"pas une image")
-    response = client.post(
-        "/predict/visualize",
-        files={"file": ("fake.txt", fake_file, "text/plain")},
-    )
+def test_visualize_rejects_non_image_with_400(client):
+    response = post_image(client, "/predict/visualize", b"pas une image", "x.txt")
     assert response.status_code == 400
 
 
-# ------------------------------------------------------------------
-# Racine
-# ------------------------------------------------------------------
+# ------------------------- Modele indisponible -------------------------
 
-def test_root_returns_200(client):
-    response = client.get("/")
-    assert response.status_code == 200
+
+def test_health_is_degraded_without_model(client_without_model):
+    data = client_without_model.get("/health").json()
+    assert data["status"] == "degraded"
+    assert data["model_loaded"] is False
+
+
+def test_predict_returns_503_without_model(client_without_model, jpeg_bytes):
+    assert post_image(client_without_model, "/predict", jpeg_bytes).status_code == 503
+
+
+def test_visualize_returns_503_without_model(client_without_model, jpeg_bytes):
+    response = post_image(client_without_model, "/predict/visualize", jpeg_bytes)
+    assert response.status_code == 503
+
+
+def test_metadata_returns_503_without_model(client_without_model):
+    assert client_without_model.get("/model/metadata").status_code == 503

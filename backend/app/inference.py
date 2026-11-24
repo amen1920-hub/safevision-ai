@@ -12,20 +12,28 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 import cv2
-import numpy as np
 from ultralytics import YOLO
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Le chemin du modele peut etre surcharge par la variable d'environnement
 # MODEL_PATH (utilise dans Docker, ou le modele est monte dans /models).
-MODEL_PATH = Path(os.getenv(
-    "MODEL_PATH",
-    str(PROJECT_ROOT / "models" / "safevision_yolov8s_v1.onnx"),
-))
+MODEL_PATH = Path(
+    os.getenv(
+        "MODEL_PATH",
+        str(PROJECT_ROOT / "models" / "safevision_yolov8s_v1.onnx"),
+    )
+)
 
 CLASS_NAMES = [
-    "Person", "Hardhat", "NO-Hardhat", "Safety Vest",
-    "NO-Safety Vest", "Mask", "NO-Mask", "Gloves", "Safety Cone",
+    "Person",
+    "Hardhat",
+    "NO-Hardhat",
+    "Safety Vest",
+    "NO-Safety Vest",
+    "Mask",
+    "NO-Mask",
+    "Gloves",
+    "Safety Cone",
 ]
 
 MODEL_METRICS = {
@@ -59,7 +67,9 @@ class InferenceEngine:
             self.is_loaded = True
         except Exception as e:
             self.is_loaded = False
-            raise RuntimeError(f"Impossible de charger le modele depuis {self.model_path} : {e}")
+            raise RuntimeError(
+                f"Impossible de charger le modele depuis {self.model_path} : {e}"
+            )
 
     def predict(
         self,
@@ -94,12 +104,18 @@ class InferenceEngine:
             confidence = float(box.conf[0])
             x1, y1, x2, y2 = [float(v) for v in box.xyxy[0]]
 
-            detections.append({
-                "class_id": class_id,
-                "class_name": CLASS_NAMES[class_id] if class_id < len(CLASS_NAMES) else f"class_{class_id}",
-                "confidence": confidence,
-                "bbox": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
-            })
+            detections.append(
+                {
+                    "class_id": class_id,
+                    "class_name": (
+                        CLASS_NAMES[class_id]
+                        if class_id < len(CLASS_NAMES)
+                        else f"class_{class_id}"
+                    ),
+                    "confidence": confidence,
+                    "bbox": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
+                }
+            )
 
         return {
             "detections": detections,

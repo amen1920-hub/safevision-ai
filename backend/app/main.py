@@ -67,6 +67,7 @@ app.add_middleware(
 # Fonctions utilitaires
 # ------------------------------------------------------------------
 
+
 def _validate_and_open_image(file_bytes: bytes) -> Image.Image:
     """Verifie que les octets recus forment bien une image valide."""
     try:
@@ -76,17 +77,22 @@ def _validate_and_open_image(file_bytes: bytes) -> Image.Image:
         image = Image.open(io.BytesIO(file_bytes)).convert("RGB")
         return image
     except (UnidentifiedImageError, OSError):
-        raise HTTPException(status_code=400, detail="Le fichier fourni n'est pas une image valide.")
+        raise HTTPException(
+            status_code=400, detail="Le fichier fourni n'est pas une image valide."
+        )
 
 
 def _ensure_model_loaded():
     if engine is None or not engine.is_loaded:
-        raise HTTPException(status_code=503, detail="Le modele n'est pas disponible pour le moment.")
+        raise HTTPException(
+            status_code=503, detail="Le modele n'est pas disponible pour le moment."
+        )
 
 
 # ------------------------------------------------------------------
 # GET /health
 # ------------------------------------------------------------------
+
 
 @app.get("/health", response_model=HealthResponse, tags=["Monitoring"])
 async def health():
@@ -104,6 +110,7 @@ async def health():
 # GET /model/metadata
 # ------------------------------------------------------------------
 
+
 @app.get("/model/metadata", response_model=ModelMetadataResponse, tags=["Monitoring"])
 async def model_metadata():
     _ensure_model_loaded()
@@ -113,6 +120,7 @@ async def model_metadata():
 # ------------------------------------------------------------------
 # POST /predict
 # ------------------------------------------------------------------
+
 
 @app.post("/predict", response_model=PredictResponse, tags=["Detection"])
 async def predict(file: UploadFile = File(...)):
@@ -142,6 +150,7 @@ async def predict(file: UploadFile = File(...)):
 # POST /predict/visualize
 # ------------------------------------------------------------------
 
+
 @app.post("/predict/visualize", tags=["Detection"])
 async def predict_visualize(file: UploadFile = File(...)):
     _ensure_model_loaded()
@@ -165,6 +174,9 @@ async def predict_visualize(file: UploadFile = File(...)):
 # Racine (pratique pour verifier rapidement que l'API tourne)
 # ------------------------------------------------------------------
 
+
 @app.get("/", tags=["Monitoring"])
 async def root():
-    return {"message": "SafeVision AI API - voir /docs pour la documentation interactive"}
+    return {
+        "message": "SafeVision AI API - voir /docs pour la documentation interactive"
+    }

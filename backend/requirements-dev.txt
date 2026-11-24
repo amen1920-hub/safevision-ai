@@ -1,4 +1,6 @@
-# Dependances supplementaires pour les tests et la CI
+# Dependances supplementaires pour les tests, le lint et la CI
 -r requirements.txt
 pytest==9.1.1
 httpx
+flake8==7.5.0
+black==26.10.1

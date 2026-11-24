@@ -40,7 +40,6 @@ export default function Webcam() {
       runningRef.current = false
       streamRef.current?.getTracks().forEach((track) => track.stop())
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Boucle : capture une image, l'envoie à l'API, dessine le résultat, recommence.

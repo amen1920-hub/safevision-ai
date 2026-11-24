@@ -11,7 +11,6 @@ Usage :
     python src/data/filter_classes.py
 """
 
-import os
 import shutil
 from pathlib import Path
 
@@ -26,17 +25,44 @@ PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 # Classes originales du dataset (ordre exact du data.yaml de Roboflow)
 ORIGINAL_CLASSES = [
-    "Excavator", "Gloves", "Hardhat", "Ladder", "Mask", "NO-Hardhat",
-    "NO-Mask", "NO-Safety Vest", "Person", "SUV", "Safety Cone",
-    "Safety Vest", "bus", "dump truck", "fire hydrant", "machinery",
-    "mini-van", "sedan", "semi", "trailer", "truck and trailer",
-    "truck", "van", "vehicle", "wheel loader"
+    "Excavator",
+    "Gloves",
+    "Hardhat",
+    "Ladder",
+    "Mask",
+    "NO-Hardhat",
+    "NO-Mask",
+    "NO-Safety Vest",
+    "Person",
+    "SUV",
+    "Safety Cone",
+    "Safety Vest",
+    "bus",
+    "dump truck",
+    "fire hydrant",
+    "machinery",
+    "mini-van",
+    "sedan",
+    "semi",
+    "trailer",
+    "truck and trailer",
+    "truck",
+    "van",
+    "vehicle",
+    "wheel loader",
 ]
 
 # Classes qu'on garde pour SafeVision AI (EPI + personnes)
 KEPT_CLASSES = [
-    "Person", "Hardhat", "NO-Hardhat", "Safety Vest",
-    "NO-Safety Vest", "Mask", "NO-Mask", "Gloves", "Safety Cone"
+    "Person",
+    "Hardhat",
+    "NO-Hardhat",
+    "Safety Vest",
+    "NO-Safety Vest",
+    "Mask",
+    "NO-Mask",
+    "Gloves",
+    "Safety Cone",
 ]
 
 SPLITS = ["train", "valid", "test"]
@@ -54,7 +80,9 @@ for old_id, class_name in enumerate(ORIGINAL_CLASSES):
 
 print("Mapping des classes conservées (old_id -> new_id) :")
 for old_id, new_id in old_to_new.items():
-    print(f"  {old_id:2d} ({ORIGINAL_CLASSES[old_id]:20s}) -> {new_id} ({KEPT_CLASSES[new_id]})")
+    print(
+        f"  {old_id:2d} ({ORIGINAL_CLASSES[old_id]:20s}) -> {new_id} ({KEPT_CLASSES[new_id]})"
+    )
 print()
 
 # ------------------------------------------------------------------
@@ -138,10 +166,14 @@ for split in SPLITS:
         "total_boxes_after": total_boxes_after,
     }
 
-    print(f"[{split}] {total_images} images analysées -> "
-          f"{kept_images} conservées, {dropped_images} supprimées (aucune annotation EPI)")
-    print(f"[{split}] Bounding boxes : {total_boxes_before} -> {total_boxes_after} "
-          f"(après filtrage des classes hors-sujet)")
+    print(
+        f"[{split}] {total_images} images analysées -> "
+        f"{kept_images} conservées, {dropped_images} supprimées (aucune annotation EPI)"
+    )
+    print(
+        f"[{split}] Bounding boxes : {total_boxes_before} -> {total_boxes_after} "
+        f"(après filtrage des classes hors-sujet)"
+    )
     print()
 
 # ------------------------------------------------------------------
@@ -173,8 +205,10 @@ print("=" * 60)
 total_kept = sum(s["kept_images"] for s in stats.values())
 total_dropped = sum(s["dropped_images"] for s in stats.values())
 for split, s in stats.items():
-    print(f"{split:6s} : {s['kept_images']:4d} images conservées "
-          f"({s['dropped_images']} supprimées)")
+    print(
+        f"{split:6s} : {s['kept_images']:4d} images conservées "
+        f"({s['dropped_images']} supprimées)"
+    )
 print(f"TOTAL  : {total_kept} images conservées, {total_dropped} supprimées")
 print(f"Classes : {len(ORIGINAL_CLASSES)} -> {len(KEPT_CLASSES)}")
 print("=" * 60)

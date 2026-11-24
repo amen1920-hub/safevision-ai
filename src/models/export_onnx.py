@@ -23,8 +23,8 @@ def main():
     onnx_path = model.export(
         format="onnx",
         imgsz=640,
-        dynamic=False,   # taille d'entree fixe -> plus rapide et plus simple pour l'API
-        simplify=True,   # simplifie le graphe ONNX (optimisation)
+        dynamic=False,  # taille d'entree fixe -> plus rapide et plus simple pour l'API
+        simplify=True,  # simplifie le graphe ONNX (optimisation)
         opset=12,
     )
 

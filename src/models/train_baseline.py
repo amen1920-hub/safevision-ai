@@ -32,31 +32,32 @@ os.environ["MLFLOW_EXPERIMENT_NAME"] = "safevision-ai"
 #    a cause du multiprocessing utilise par le DataLoader de PyTorch)
 # ------------------------------------------------------------------
 
+
 def main():
     DATA_YAML = PROJECT_ROOT / "data" / "processed" / "data.yaml"
 
     # Modele de depart : YOLOv8n pre-entraine sur COCO (le plus petit/rapide)
     model = YOLO("yolov8n.pt")
 
-    results = model.train(
+    model.train(
         data=str(DATA_YAML),
-        epochs=30,              # peu d'epochs : c'est volontairement une baseline simple
+        epochs=30,  # peu d'epochs : c'est volontairement une baseline simple
         imgsz=640,
-        batch=8,                # adapte a une carte 4 Go de VRAM (GTX 1650 Ti)
-        patience=10,            # arret anticipe si pas d'amelioration pendant 10 epochs
+        batch=8,  # adapte a une carte 4 Go de VRAM (GTX 1650 Ti)
+        patience=10,  # arret anticipe si pas d'amelioration pendant 10 epochs
         project="runs_safevision",
         name="baseline_yolov8n_v2",
         exist_ok=True,
         seed=42,
-        workers=4,               # corrige : le vrai fix etait le if __name__, pas workers=0
+        workers=4,  # corrige : le vrai fix etait le if __name__, pas workers=0
         verbose=True,
     )
 
     print("=" * 60)
     print("ENTRAINEMENT BASELINE TERMINE")
     print("=" * 60)
-    print(f"Resultats sauvegardes dans : runs_safevision/baseline_yolov8n/")
-    print(f"Consultez MLflow sur http://127.0.0.1:5000 pour voir les metriques")
+    print("Resultats sauvegardes dans : runs_safevision/baseline_yolov8n/")
+    print("Consultez MLflow sur http://127.0.0.1:5000 pour voir les metriques")
 
 
 if __name__ == "__main__":

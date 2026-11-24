@@ -26,8 +26,8 @@ PT_MODEL_PATH = PROJECT_ROOT / "models" / "safevision_yolov8s_v1.pt"
 ONNX_MODEL_PATH = PROJECT_ROOT / "models" / "safevision_yolov8s_v1.onnx"
 TEST_IMAGES_DIR = PROJECT_ROOT / "data" / "processed" / "test" / "images"
 
-N_WARMUP = 5     # inferences "a blanc" pour chauffer le GPU/CPU (non comptees)
-N_RUNS = 30      # nombre d'inferences mesurees
+N_WARMUP = 5  # inferences "a blanc" pour chauffer le GPU/CPU (non comptees)
+N_RUNS = 30  # nombre d'inferences mesurees
 
 
 def get_sample_images(n=N_RUNS):
@@ -86,14 +86,22 @@ def summarize(name, times):
     print(f"Latence moyenne : {mean_ms:.2f} ms (+/- {std_ms:.2f} ms)")
     print(f"Latence min/max : {arr.min():.2f} ms / {arr.max():.2f} ms")
     print(f"FPS equivalent  : {fps:.1f}")
-    return {"mean_ms": mean_ms, "std_ms": std_ms, "min_ms": arr.min(), "max_ms": arr.max(), "fps": fps}
+    return {
+        "mean_ms": mean_ms,
+        "std_ms": std_ms,
+        "min_ms": arr.min(),
+        "max_ms": arr.max(),
+        "fps": fps,
+    }
 
 
 def main():
     images = get_sample_images()
     print(f"Benchmark sur {len(images)} images ({N_WARMUP} de warmup non comptees)")
-    print(f"Device utilise pour les deux modeles : {DEVICE.upper()} "
-          f"(comparaison equitable, onnxruntime-gpu non disponible sur cette machine)")
+    print(
+        f"Device utilise pour les deux modeles : {DEVICE.upper()} "
+        f"(comparaison equitable, onnxruntime-gpu non disponible sur cette machine)"
+    )
 
     print("\n[1/2] Benchmark PyTorch (.pt)...")
     pt_times = benchmark_pytorch(images)
@@ -110,12 +118,15 @@ def main():
     print("=" * 60)
     print(f"{'Modele':<20}{'Latence moy.':<18}{'FPS':<10}")
     print(f"{'PyTorch':<20}{pt_stats['mean_ms']:.2f} ms{'':<10}{pt_stats['fps']:.1f}")
-    print(f"{'ONNX Runtime':<20}{onnx_stats['mean_ms']:.2f} ms{'':<10}{onnx_stats['fps']:.1f}")
+    print(
+        f"{'ONNX Runtime':<20}{onnx_stats['mean_ms']:.2f} ms{'':<10}{onnx_stats['fps']:.1f}"
+    )
     print(f"\nSpeedup ONNX vs PyTorch : {speedup:.2f}x")
 
     # --- Log dans MLflow pour archivage ---
     try:
         import mlflow
+
         os.environ["MLFLOW_TRACKING_URI"] = "http://127.0.0.1:5000"
         mlflow.set_tracking_uri("http://127.0.0.1:5000")
         mlflow.set_experiment("safevision-ai")

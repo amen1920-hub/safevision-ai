@@ -85,12 +85,14 @@ for split in SPLITS:
             continue
 
         group = get_group_key(stem)
-        all_items.append({
-            "stem": stem,
-            "image_path": image_path,
-            "label_path": label_path,
-            "group": group,
-        })
+        all_items.append(
+            {
+                "stem": stem,
+                "image_path": image_path,
+                "label_path": label_path,
+                "group": group,
+            }
+        )
 
 print(f"Total d'images collectees (avant re-split) : {len(all_items)}")
 
@@ -107,9 +109,13 @@ group_sizes = {g: len(items) for g, items in groups.items()}
 
 n_video_groups = sum(1 for g in group_keys if g.startswith("VIDEO::"))
 n_single_groups = sum(1 for g in group_keys if g.startswith("SINGLE::"))
-n_images_in_video_groups = sum(size for g, size in group_sizes.items() if g.startswith("VIDEO::"))
+n_images_in_video_groups = sum(
+    size for g, size in group_sizes.items() if g.startswith("VIDEO::")
+)
 
-print(f"Groupes video detectes   : {n_video_groups} (regroupant {n_images_in_video_groups} images)")
+print(
+    f"Groupes video detectes   : {n_video_groups} (regroupant {n_images_in_video_groups} images)"
+)
 print(f"Images independantes     : {n_single_groups}")
 print()
 
@@ -129,10 +135,7 @@ counts = {split: 0 for split in SPLITS}
 for group_key in group_keys:
     size = group_sizes[group_key]
     # Choisir le split qui est le plus "en retard" par rapport a sa cible
-    deficits = {
-        split: targets[split] - counts[split]
-        for split in SPLITS
-    }
+    deficits = {split: targets[split] - counts[split] for split in SPLITS}
     best_split = max(deficits, key=deficits.get)
     assignment[group_key] = best_split
     counts[best_split] += size

@@ -72,7 +72,9 @@ def main(run_id: str):
         print(f"Statut 'Production' assigne a la version {version} (via stages).")
     except Exception as e:
         # API recente (aliases) - remplace les stages dans MLflow 2.9+/3.x
-        print(f"Les stages classiques ne sont pas disponibles ({e}), utilisation des alias...")
+        print(
+            f"Les stages classiques ne sont pas disponibles ({e}), utilisation des alias..."
+        )
         client.set_registered_model_alias(
             name=MODEL_NAME,
             alias="production",
