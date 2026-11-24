@@ -47,3 +47,5 @@ runs/
 # Poids pre-entraines telecharges automatiquement par Ultralytics
 yolov8n.pt
 yolov8s.pt
+# Local environment
+.env

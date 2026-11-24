@@ -1,0 +1,21 @@
+services:
+  backend:
+    build: ./backend
+    image: safevision-backend
+    ports:
+      # Port de l'API sur la machine : 8000 par defaut, modifiable via le fichier .env
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      # Le modele ONNX n'est pas dans Git : il est recupere avec 'dvc pull' puis monte ici
+      - ./models:/models:ro
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:${API_PORT:-8000}
+    image: safevision-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
