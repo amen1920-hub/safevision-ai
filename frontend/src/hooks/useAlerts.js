@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { playAlertSound, unlockAudio } from '../alertSound'
+import { emptyEpisode, evaluateEpisode } from '../alertLogic'
 
-const COOLDOWN_MS = 3000 // webcam : au plus une alerte toutes les 3 s
+const SAMPLE_MS = 3000 // webcam : une image sur 3 s compte dans les statistiques
 const MAX_HISTORY = 20
 
 export function useAlerts() {
@@ -15,7 +16,8 @@ export function useAlerts() {
     byClass: {},
   })
   const mutedRef = useRef(false)
-  const lastWebcamAlertRef = useRef(0)
+  const episodeRef = useRef(emptyEpisode())
+  const lastSampleRef = useRef(0)
 
   // Autorise le son dès la première interaction avec la page
   useEffect(() => {
@@ -32,28 +34,49 @@ export function useAlerts() {
   }, [])
 
   // Appelée après chaque détection. 'source' vaut 'Image' ou 'Webcam'.
+  // Image : chaque non-conformité déclenche une alerte.
+  // Webcam : une seule alerte par situation ; une nouvelle alerte seulement si
+  // une nouvelle non-conformité apparaît (autre personne, autre équipement).
   const notify = useCallback((detections, source) => {
-    const missing = detections.filter((d) => d.class_name.startsWith('NO-'))
-    setStats((prev) => {
-      const byClass = { ...prev.byClass }
-      for (const d of detections) {
-        byClass[d.class_name] = (byClass[d.class_name] || 0) + 1
-      }
-      return {
-        analyses: prev.analyses + 1,
-        objects: prev.objects + detections.length,
-        violations: prev.violations + missing.length,
-        nonCompliant: prev.nonCompliant + (missing.length > 0 ? 1 : 0),
-        byClass,
-      }
-    })
-    if (missing.length === 0) return
-
     const now = Date.now()
+    const missing = detections.filter((d) => d.class_name.startsWith('NO-'))
+
+    let newViolations = missing.length
     if (source === 'Webcam') {
-      if (now - lastWebcamAlertRef.current < COOLDOWN_MS) return
-      lastWebcamAlertRef.current = now
+      const counts = {}
+      for (const d of missing) {
+        counts[d.class_name] = (counts[d.class_name] || 0) + 1
+      }
+      const result = evaluateEpisode(episodeRef.current, counts, now)
+      episodeRef.current = result.episode
+      newViolations = result.newViolations
     }
+
+    // Statistiques : toutes les images, mais la webcam seulement 1 fois / 3 s
+    // (sinon chaque image du flux est comptée comme une analyse).
+    const sampled =
+      source !== 'Webcam' || now - lastSampleRef.current >= SAMPLE_MS
+    if (sampled) lastSampleRef.current = now
+    if (sampled || newViolations > 0) {
+      setStats((prev) => {
+        const byClass = { ...prev.byClass }
+        if (sampled) {
+          for (const d of detections) {
+            byClass[d.class_name] = (byClass[d.class_name] || 0) + 1
+          }
+        }
+        return {
+          analyses: prev.analyses + (sampled ? 1 : 0),
+          objects: prev.objects + (sampled ? detections.length : 0),
+          violations: prev.violations + newViolations,
+          nonCompliant:
+            prev.nonCompliant + (sampled && missing.length > 0 ? 1 : 0),
+          byClass,
+        }
+      })
+    }
+
+    if (newViolations === 0) return
 
     if (!mutedRef.current) playAlertSound()
 
