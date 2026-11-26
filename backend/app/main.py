@@ -19,6 +19,7 @@ import torch
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from fastapi.concurrency import run_in_threadpool
 from PIL import Image, UnidentifiedImageError
 
 from app.inference import InferenceEngine
@@ -130,10 +131,12 @@ async def predict(file: UploadFile = File(...)):
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Fichier vide.")
 
-    image = _validate_and_open_image(file_bytes)
+    image = await run_in_threadpool(_validate_and_open_image, file_bytes)
 
     try:
-        result = engine.predict(image)
+        # L'inference est du calcul bloquant : on la sort de la boucle asynchrone
+        # pour que l'API reste reactive pendant qu'elle tourne.
+        result = await run_in_threadpool(engine.predict, image)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur pendant l'inference : {e}")
 
@@ -159,11 +162,13 @@ async def predict_visualize(file: UploadFile = File(...)):
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Fichier vide.")
 
-    image = _validate_and_open_image(file_bytes)
+    image = await run_in_threadpool(_validate_and_open_image, file_bytes)
 
     try:
-        result = engine.predict(image)
-        annotated_bytes = engine.get_annotated_image_bytes(result["raw_result"])
+        result = await run_in_threadpool(engine.predict, image)
+        annotated_bytes = await run_in_threadpool(
+            engine.get_annotated_image_bytes, result["raw_result"]
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur pendant l'inference : {e}")
 
