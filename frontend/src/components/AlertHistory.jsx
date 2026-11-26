@@ -27,8 +27,8 @@ export default function AlertHistory({ history, onClear }) {
                   <span className="mr-2 rounded bg-red-500/20 px-2 py-0.5 text-red-300">
                     {a.source}
                   </span>
-                  {a.count} non-conformité{a.count > 1 ? 's' : ''} :{' '}
-                  {a.classes.join(', ')}
+                  {a.count} {a.unit || 'non-conformité'}
+                  {a.count > 1 ? 's' : ''} : {a.classes.join(', ')}
                 </span>
                 <time className="shrink-0 text-slate-400">
                   {a.time.toLocaleTimeString('fr-FR')}

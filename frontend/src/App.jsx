@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
 import ModelPage from './pages/ModelPage'
 import DashboardPage from './pages/DashboardPage'
@@ -9,6 +9,7 @@ import Gallery from './components/Gallery'
 import Webcam from './components/Webcam'
 import AlertHistory from './components/AlertHistory'
 import { useAlerts } from './hooks/useAlerts'
+import { fingerprintFile } from './imageFingerprint'
 import { getHealth, predict } from './services/api'
 
 function AppShell() {
@@ -18,6 +19,8 @@ function AppShell() {
   const [runId, setRunId] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [duplicateImage, setDuplicateImage] = useState(false)
+  const analyzedImagesRef = useRef(new Map())
   const { muted, toggleMute, history, notify, clearHistory, stats } =
     useAlerts()
 
@@ -29,14 +32,25 @@ function AppShell() {
 
   const handleFile = async (file) => {
     setError(null)
+    setDuplicateImage(false)
     setResult(null)
     setLoading(true)
     if (imageUrl) URL.revokeObjectURL(imageUrl)
     setImageUrl(URL.createObjectURL(file))
     try {
+      const fingerprint = await fingerprintFile(file)
+      const previousResult = analyzedImagesRef.current.get(fingerprint)
+      if (previousResult) {
+        setResult(previousResult)
+        setRunId((id) => id + 1)
+        setDuplicateImage(true)
+        return
+      }
+
       const data = await predict(file)
       setResult(data)
       setRunId((id) => id + 1)
+      analyzedImagesRef.current.set(fingerprint, data)
       notify(data.detections, 'Image')
     } catch (e) {
       setError(e.message)
@@ -123,6 +137,16 @@ function AppShell() {
           {error && (
             <div className="rounded-xl bg-red-500/20 p-4 text-red-200">
               {error}
+            </div>
+          )}
+
+          {duplicateImage && (
+            <div
+              role="status"
+              className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-4 text-amber-200"
+            >
+              Cette image a déjà été analysée. Son résultat est réaffiché,
+              mais elle n’est pas ajoutée une deuxième fois au tableau de bord.
             </div>
           )}
 

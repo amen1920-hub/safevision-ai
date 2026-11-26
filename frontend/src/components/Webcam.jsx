@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { predict } from '../services/api'
 import { drawDetections } from '../drawDetections'
+import { countViolatingPeople } from '../personViolations'
 
 const JPEG_QUALITY = 0.7
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -84,10 +85,14 @@ export default function Webcam({ onDetections }) {
           server: Math.round(data.inference_time_ms),
           objects: data.num_detections,
         })
-        setViolations(
-          data.detections.filter((d) => d.class_name.startsWith('NO-')).length,
-        )
-        onDetections?.(data.detections, 'Webcam')
+        const personViolationCount = countViolatingPeople(data.detections)
+        const missingCount = data.detections.filter((d) =>
+          d.class_name.startsWith('NO-'),
+        ).length
+        const currentViolations =
+          personViolationCount ?? (missingCount > 0 ? 1 : 0)
+        setViolations(currentViolations)
+        onDetections?.(data.detections, 'Webcam', personViolationCount)
       } catch (e) {
         setError(e.message)
         stop()
@@ -154,8 +159,8 @@ export default function Webcam({ onDetections }) {
 
         {running && violations > 0 && (
           <div className="rounded-xl bg-red-600 p-4 font-semibold text-white">
-            ALERTE : {violations} non-conformité{violations > 1 ? 's' : ''}{' '}
-            détectée{violations > 1 ? 's' : ''}
+            ALERTE : {violations} personne{violations > 1 ? 's' : ''} en
+            infraction
           </div>
         )}
       </section>
