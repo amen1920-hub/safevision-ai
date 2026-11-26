@@ -83,26 +83,16 @@ cd safevision-ai
 
 ### 1. Récupérer le modèle
 
-Le modèle (44 Mo) n'est pas dans Git. Deux possibilités :
+Le modèle (44 Mo) n'est pas dans Git : il est versionné avec DVC. Le dossier `models/` doit contenir
+`safevision_yolov8s_v1.onnx` avant de lancer l'application.
 
-**A. Téléchargement direct (recommandé, aucun compte nécessaire)**
-
-Windows (PowerShell) :
-```powershell
-Invoke-WebRequest -Uri https://github.com/amen1920-hub/safevision-ai/releases/download/v1.0/safevision_yolov8s_v1.onnx -OutFile models\safevision_yolov8s_v1.onnx
-```
-
-Linux / macOS :
-```bash
-curl -L -o models/safevision_yolov8s_v1.onnx \
-  https://github.com/amen1920-hub/safevision-ai/releases/download/v1.0/safevision_yolov8s_v1.onnx
-```
-
-**B. Avec DVC** : le remote DVC est un Google Drive privé, il faut donc un accès au dossier.
 ```bash
 pip install dvc dvc-gdrive
 dvc pull models/safevision_yolov8s_v1.onnx.dvc
 ```
+
+Le remote DVC est un Google Drive privé : l'accès doit être autorisé par l'auteur du projet. Sans le
+fichier ONNX, l'API démarre mais répond `503` sur `/predict`.
 
 ### 2. Lancer l'application
 
@@ -264,5 +254,5 @@ scène en `train`, `valid` et `test`.
 
 ## Auteurs
 
-Projet réalisé dans le cadre du module Deep Learning Avancé, 5ᵉ année du cycle ingénieur IA & Data Science.
-<!-- Laabidi Amen allah -->
+Projet réalisé dans le cadre du module Deep Learning Avancé, 3ᵉ année du cycle ingénieur IA & Data Science.
+<!-- Ajouter les noms des membres du groupe -->
