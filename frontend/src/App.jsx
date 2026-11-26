@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react'
+import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
+import ModelPage from './pages/ModelPage'
+import DashboardPage from './pages/DashboardPage'
 import Dropzone from './components/Dropzone'
 import BoundingBoxCanvas from './components/BoundingBoxCanvas'
 import ScoreBars from './components/ScoreBars'
 import Gallery from './components/Gallery'
 import Webcam from './components/Webcam'
+import AlertHistory from './components/AlertHistory'
+import { useAlerts } from './hooks/useAlerts'
 import { getHealth, predict } from './services/api'
 
-export default function App() {
+function AppShell() {
   const [health, setHealth] = useState(null)
   const [imageUrl, setImageUrl] = useState(null)
   const [result, setResult] = useState(null)
   const [runId, setRunId] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [mode, setMode] = useState('image')
+  const { muted, toggleMute, history, notify, clearHistory, stats } =
+    useAlerts()
 
   useEffect(() => {
     getHealth()
@@ -31,6 +37,7 @@ export default function App() {
       const data = await predict(file)
       setResult(data)
       setRunId((id) => id + 1)
+      notify(data.detections, 'Image')
     } catch (e) {
       setError(e.message)
     } finally {
@@ -49,22 +56,42 @@ export default function App() {
         <h1 className="text-2xl font-bold">SafeVision AI</h1>
         <nav className="flex gap-2">
           {[
-            ['image', 'Image'],
-            ['webcam', 'Webcam'],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => setMode(id)}
-              className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
-                mode === id
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-              }`}
+            ['/', 'Image'],
+            ['/webcam', 'Webcam'],
+            ['/dashboard', 'Tableau de bord'],
+            ['/modele', 'Modèle'],
+          ].map(([to, label]) => (
+            <NavLink
+              key={to}
+              to={to}
+              end
+              className={({ isActive }) =>
+                `rounded-lg px-4 py-1.5 text-sm font-medium transition ${
+                  isActive
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`
+              }
             >
               {label}
-            </button>
+            </NavLink>
           ))}
+          <a
+            href="http://localhost:5000"
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-lg bg-slate-800 px-4 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-700"
+          >
+            MLflow ↗
+          </a>
         </nav>
+        <div className="flex items-center gap-3">
+        <button
+          onClick={toggleMute}
+          className="rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-700"
+        >
+          {muted ? 'Son coupé' : 'Son activé'}
+        </button>
         <span
           className={`rounded-full px-3 py-1 text-sm ${
             apiOk
@@ -78,11 +105,16 @@ export default function App() {
               ? 'API connectée'
               : 'API hors ligne'}
         </span>
+        </div>
       </header>
 
-      {mode === 'webcam' ? (
-        <Webcam />
-      ) : (
+      <Routes>
+        <Route path="/webcam" element={<Webcam onDetections={notify} />} />
+        <Route path="/dashboard" element={<DashboardPage stats={stats} />} />
+        <Route path="/modele" element={<ModelPage />} />
+        <Route
+          path="*"
+          element={
       <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-3">
         <section className="space-y-4 lg:col-span-2">
           <Dropzone onFile={handleFile} disabled={loading} />
@@ -150,7 +182,19 @@ export default function App() {
           )}
         </aside>
       </main>
-      )}
+          }
+        />
+      </Routes>
+
+      <AlertHistory history={history} onClear={clearHistory} />
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <HashRouter>
+      <AppShell />
+    </HashRouter>
   )
 }

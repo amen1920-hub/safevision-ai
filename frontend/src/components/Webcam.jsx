@@ -13,7 +13,7 @@ function cameraErrorMessage(e) {
   return e?.message || 'Impossible de démarrer la caméra.'
 }
 
-export default function Webcam() {
+export default function Webcam({ onDetections }) {
   const videoRef = useRef(null)
   const overlayRef = useRef(null)
   const streamRef = useRef(null)
@@ -87,6 +87,7 @@ export default function Webcam() {
         setViolations(
           data.detections.filter((d) => d.class_name.startsWith('NO-')).length,
         )
+        onDetections?.(data.detections, 'Webcam')
       } catch (e) {
         setError(e.message)
         stop()

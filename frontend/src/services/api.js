@@ -28,3 +28,9 @@ export async function predict(file) {
   if (!res.ok) throw new Error(data.detail || `Erreur ${res.status}`)
   return { ...data, client_latency_ms: clientLatencyMs }
 }
+
+export async function getMetadata() {
+  const res = await request('/model/metadata')
+  if (!res.ok) throw new Error(`Erreur ${res.status}`)
+  return res.json()
+}

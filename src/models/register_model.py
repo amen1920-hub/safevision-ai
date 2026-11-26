@@ -10,7 +10,10 @@ Avant de lancer ce script, recupere le Run ID du run "advanced_yolov8s" :
 - Ou regarde l'URL de la page du run : .../runs/<RUN_ID>/...
 
 Usage :
+    # Modele avance -> Production (par defaut)
     python src/models/register_model.py --run-id <RUN_ID>
+    # Modele de reference (baseline) -> Staging
+    python src/models/register_model.py --run-id <RUN_ID> --stage Staging
 """
 
 import argparse
@@ -25,7 +28,7 @@ MODEL_NAME = "safevision-yolo"
 ARTIFACT_PATH = "weights/best.pt"  # chemin de l'artefact dans le run
 
 
-def main(run_id: str):
+def main(run_id: str, stage: str = "Production"):
     mlflow.set_tracking_uri("http://127.0.0.1:5000")
     client = MlflowClient()
 
@@ -49,27 +52,34 @@ def main(run_id: str):
     print(f"Modele enregistre : '{MODEL_NAME}' version {version}")
 
     # 2. Ajouter une description utile
-    client.update_model_version(
-        name=MODEL_NAME,
-        version=version,
-        description=(
+    if stage == "Staging":
+        description = (
+            "YOLOv8n (modele de reference / baseline) sur le dataset SafeVision AI "
+            "(9 classes EPI). Sert de point de comparaison au modele avance. "
+            f"Run source MLflow : {run_id}"
+        )
+    else:
+        description = (
             "YOLOv8s fine-tune sur le dataset SafeVision AI (9 classes EPI). "
             "Entraine 80 epochs, augmentation renforcee (mixup, copy_paste). "
-            f"mAP50=0.626, mAP50-95=0.360, precision=0.866, recall=0.572. "
+            "Validation : mAP50=0.626, mAP50-95=0.360, precision=0.866, "
+            "recall=0.572. Test : mAP50=0.657, mAP50-95=0.358. "
             f"Run source MLflow : {run_id}"
-        ),
+        )
+    client.update_model_version(
+        name=MODEL_NAME, version=version, description=description
     )
 
-    # 3. Assigner le statut "Production" (compatible anciennes et nouvelles versions de MLflow)
+    # 3. Assigner le statut demande (compatible anciennes et nouvelles versions de MLflow)
     try:
         # API historique (stages) - fonctionne encore sur de nombreuses versions
         client.transition_model_version_stage(
             name=MODEL_NAME,
             version=version,
-            stage="Production",
+            stage=stage,
             archive_existing_versions=True,
         )
-        print(f"Statut 'Production' assigne a la version {version} (via stages).")
+        print(f"Statut '{stage}' assigne a la version {version} (via stages).")
     except Exception as e:
         # API recente (aliases) - remplace les stages dans MLflow 2.9+/3.x
         print(
@@ -77,10 +87,10 @@ def main(run_id: str):
         )
         client.set_registered_model_alias(
             name=MODEL_NAME,
-            alias="production",
+            alias=stage.lower(),
             version=version,
         )
-        print(f"Alias 'production' assigne a la version {version} (via alias).")
+        print(f"Alias '{stage.lower()}' assigne a la version {version} (via alias).")
 
     print("=" * 60)
     print("MODELE ENREGISTRE DANS LE MODEL REGISTRY")
@@ -98,5 +108,12 @@ if __name__ == "__main__":
         required=True,
         help="Run ID MLflow du run advanced_yolov8s (visible dans l'URL ou l'onglet Overview)",
     )
+    parser.add_argument(
+        "--stage",
+        type=str,
+        choices=["Production", "Staging"],
+        default="Production",
+        help="Statut a assigner : Production (modele avance) ou Staging (baseline)",
+    )
     args = parser.parse_args()
-    main(args.run_id)
+    main(args.run_id, args.stage)
