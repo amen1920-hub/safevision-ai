@@ -254,5 +254,6 @@ scène en `train`, `valid` et `test`.
 
 ## Auteurs
 
-Projet réalisé dans le cadre du module Deep Learning Avancé, 3ᵉ année du cycle ingénieur IA & Data Science.
-<!-- Ajouter les noms des membres du groupe -->
+Projet réalisé dans le cadre du module Deep Learning Avancé, 5ᵉ année du cycle ingénieur IA & Data Science.
+
+Amen allah Laabidi
