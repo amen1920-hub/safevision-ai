@@ -37,10 +37,10 @@ CLASS_NAMES = [
 ]
 
 MODEL_METRICS = {
-    "mAP50": 0.626,
-    "mAP50_95": 0.360,
-    "precision": 0.866,
-    "recall": 0.572,
+    "mAP50": 0.66,
+    "mAP50_95": 0.36,
+    "precision": 0.78,
+    "recall": 0.62,
 }
 
 DEVICE = "cpu"  # onnxruntime-gpu non disponible sur cette machine (voir rapport)
