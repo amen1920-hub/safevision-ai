@@ -244,13 +244,9 @@ scène en `train`, `valid` et `test`.
 
 - **`Gloves`** est quasiment indétectable (rappel 0,07, AP50 0,11 sur le test) : objets petits et peu
   nombreux dans le jeu de données.
-- Environ **un tiers** des `NO-Mask` et des `NO-Safety Vest` ne sont pas détectés : l'alerte ne se
-  déclenche pas dans ces cas.
+
 - Le jeu de test ne contient que **55 images** : un écart de quelques points est dans le bruit statistique.
-- Le modèle ne reconnaît pas l'identité des personnes : une même personne vue dans une image importée puis
-  dans la webcam est comptée une fois dans chaque source.
-- Les alertes par e-mail, la page d'analyse et le réglage des seuils depuis l'interface ne sont pas
-  implémentés.
+
 
 ## Auteurs
 
